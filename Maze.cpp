@@ -6,8 +6,13 @@
 
 Maze::Maze(const string& filename)
 {
-    std::ifstream myfile;
-    myfile.open(filename);
+    std::ifstream myFile(filename);
+
+    // checking if the provided file is valid
+    if(!myFile.good())
+    {
+        throw std::runtime_error("invalid file");
+    }
 
     // a string that will read each line in the file (row)
     string line;
@@ -25,7 +30,7 @@ Maze::Maze(const string& filename)
     int endPointsCount = 0;
 
     // parsing the maze file
-    while (getline(myfile, line))
+    while (getline(myFile, line))
     {
         // an array that will store the current row, and then pushed to the walls 2D array
         vector<bool> row;
