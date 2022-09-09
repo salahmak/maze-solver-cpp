@@ -9,33 +9,46 @@ Maze::Maze(const string& filename)
     std::ifstream myfile;
     myfile.open(filename);
 
+    // a string that will read each line in the file (row)
     string line;
 
-    string tile;
-
+    //counters, i for rows, j for cols
     int i = 0;
     int j = 0;
 
+    //will use it to find out the width of the maze
     int maxWidth = 0;
+
+
+    // to track how many start/end points exist in the maze, to make sure there is exactly 1 for each
+    int startPointsCount = 0;
+    int endPointsCount = 0;
 
     // parsing the maze file
     while (getline(myfile, line))
     {
+        // an array that will store the current row, and then pushed to the walls 2D array
         vector<bool> row;
 
+        //resetting j after each row
         j = 0;
 
-        for (char c : line)
+        // looping over columns of the current row
+        for (char tile : line)
         {
-            row.push_back(c == '#');
+            // if current tile is a wall, we push true to the row array, otherwise we push false
+            row.push_back(tile == '#');
 
-            if (c == 'A')
+            //initializing the start and end point
+            if (tile == 'A')
             {
                 this->start = std::make_pair(i, j);
+                startPointsCount++;
             }
-            else if (c == 'B')
+            else if (tile == 'B')
             {
                 this->goal = std::make_pair(i, j);
+                endPointsCount++;
             }
 
             j++;
@@ -52,11 +65,19 @@ Maze::Maze(const string& filename)
     }
 
 
+    if(startPointsCount != 1 || endPointsCount != 1)
+    {
+        throw std::runtime_error("Please provide exactly 1 start and 1 end point");
+    }
+
     height = i;
     width = maxWidth;
 
 }
 
+/*
+ * A function that prints the maze, if it is solved, it will draw the path of the solution
+ * */
 void Maze::print()
 {
     for(int i = 0; i < height; i++)
@@ -88,7 +109,10 @@ void Maze::print()
     }
 }
 
-// node state is coordinates (i, j) of a node
+/*
+ * A function that returns an array of pairs of type: <string: action, NodeState>
+ * where NodeState is a pair of type: <int: row, int: col>
+ * */
 vector<pair<string, NodeState>> Maze::neighbors(NodeState node)
 {
     int row = node.first;
@@ -148,16 +172,22 @@ void Maze::solve()
 
     while(true)
     {
+        // if the frontier is empty, then there is no solution
         if(frontier.empty())
         {
-            throw "no solution";
+            throw std::runtime_error("no solution");
         }
 
+        // we pick a node from the frontier to work with (we remove it from the frontier and work with it)
         Node node = frontier.remove();
+
+        // we have explored 1 more node
         numExplored++;
 
+        //if the current node we picked is the goal
         if(node.getState() == this->goal)
         {
+            //we backtrace the nodes to get the full solution history
              while(node.getParent() != nullptr)
              {
                  //inserting the action at the start of the solution actions array
@@ -166,26 +196,37 @@ void Maze::solve()
                  //inserting the current node state at the start of the solution cells array
                  this->solutionCells.insert(solutionCells.begin(), node.getState());
 
+                 // we swap the current node with its parent (to go backwards)
                  node = *node.getParent();
              }
 
-            std::cout << this->numExplored << std::endl;
+             // when there is a solution, we return from the solve() function
             return;
         }
 
 
+        // when the current node is not the solution, we get possible moves and add them to the frontier and we continue again
+
         //adding the current node to the explored states array
         this->explored.push_back(node.getState());
 
-        //adding the neighbors to the frontier
+        //adding the neighbor tiles to the frontier
         for(const pair<string, NodeState>& neighbor : neighbors(node.getState()))
         {
 
+           /*
+            * neighbor.first: action
+            * neighbor.second: NodeState (i, j)
+           */
+
+            // to check that the current NodeState is not explored
             bool isNotExplored = std::find(explored.begin(), explored.end(), neighbor.second) == explored.end();
 
-            //neighbor.second is the NodeState
+            // if the current neighbor's state isn't inside the frontier and not explored before
+            // we create a child node and add it to the frontier
             if(!frontier.contains(neighbor.second) && isNotExplored)
             {
+                // node is the parent of the child, since we got to child by making 1 move from node (neighbor)
                 Node child = Node(neighbor.second, node, neighbor.first);
                 frontier.add(child);
             }
@@ -193,8 +234,15 @@ void Maze::solve()
     }
 }
 
+/*
+ * getter for solution actions
+ * */
 std::vector<std::string> Maze::getSolActions()
 {
-    solve();
+    if(solutionActions.empty())
+    {
+        throw std::runtime_error("Maze hasn't been solved yet");
+    }
+
     return this->solutionActions;
 }

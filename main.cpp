@@ -1,43 +1,24 @@
 #include <iostream>
-#include <stack>
-#include <string>
-#include <vector>
-#include <algorithm>
-
 #include "Maze.h"
 
 
-
-int main(int argc, char const *argv[])
+int main()
 {
-    
-    Maze maze("maze.txt");
+    try{
+        Maze maze("maze.txt");
 
+        std::cout << "before solving: \n";
+        maze.print();
 
-    // vector<pair<string, NodeState>> n = maze.neighbors(std::make_pair(5, 2));
+        maze.solve();
 
-    // for(pair<string, NodeState> p : n)
-    // {
-    //     std::cout << p.first << std::endl;
-    // }
+        std::cout << "\n\nafter solving: \n";
+        maze.print();
 
-    std::cout << "before solving: \n";
-    maze.print();
-    std::vector<std::string> sol = maze.getSolActions();
-
-    for(std::string action : sol)
-    {
-//        std::cout << action << std::endl;
+    } catch (const std::runtime_error& e) {
+        std::cout << e.what() << std::endl;
+        return 1;
     }
-
-    std::cout << "\n\nafter solving: \n";
-    maze.print();
 
     return 0;
 }
-
-
-
-
-
-//Queue
